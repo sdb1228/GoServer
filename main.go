@@ -27,5 +27,6 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	executeTemplate(w, r, "index")
+	t := lookupTemplate("index")
+	t.Execute(w, nil)
 }
