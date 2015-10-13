@@ -5,6 +5,7 @@ module.exports = {
         poll: [
             './assets/stylesheets/poll.scss',
             './assets/javascripts/poll.js',
+            './assets/stylesheets/stuff.scss',
         ],
     },
     output: {
@@ -13,7 +14,7 @@ module.exports = {
     },
     module: {
         loaders: [
-            { test: /\.js$/, loader: 'babel' },
+            { test: /\.js$/, loader: 'babel-loader?stage=0' },
             { test: /\.s?css$/, loader: ExtractTextPlugin.extract("style-loader", "css-loader!sass-loader") },
             { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: "file" },
             { test: /\.(woff|woff2)$/, loader:"url?prefix=font/&limit=5000" },
