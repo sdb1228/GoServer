@@ -4,3 +4,30 @@ input{
   font-weight: 400,
   
 }
+.appstorebutton {
+  height: 80px;
+  width: 185px;
+  margin: 50px;
+  position: relative;
+  overflow: hidden;
+}
+ 
+.iphone {
+  background: #7b7a7f;
+}
+.appstorebutton a {
+  color: white;
+  text-decoration: none;
+}
+ 
+.appstorebutton p {
+  font: 30px/1 Helvetica, Arial, sans-serif;
+  text-align: center;
+  color: white;
+  margin: 4px 0 0 0px;
+  width: 180px;
+}
+ 
+.appstorebutton p small {
+  font-size: 15px;
+}

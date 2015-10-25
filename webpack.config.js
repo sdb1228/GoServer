@@ -3,6 +3,7 @@ var ExtractTextPlugin = require("extract-text-webpack-plugin");
 module.exports = {
     entry: {
         poll: [
+            './assets/javascripts/schedule.js',
             './assets/stylesheets/poll.scss',
             './assets/javascripts/poll.js',
             './assets/stylesheets/stuff.scss',
