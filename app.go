@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -42,9 +43,24 @@ type game struct {
 	Gamesdatetime time.Time `json:"gamesdatetime"`
 }
 
+type config struct {
+    User        string
+    Password    string
+    Database    string
+    Host        string
+}
+
 func init() {
+    file, _ := os.Open("config.json")
+    decoder := json.NewDecoder(file)
+    config := config{}
+    ferr := decoder.Decode(&config)
+    if ferr != nil {
+        fmt.Println("error:", ferr)
+    }
+
 	var err error
-	db, err = sql.Open("postgres", "user=dburnett dbname=Soccer_Games host=54.68.232.199 password=doug1 sslmode=disable")
+	db, err = sql.Open("postgres", fmt.Sprintf("user=%v dbname=%v host=%v password=%v sslmode=disable", config.User, config.Database, config.Host, config.Password))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,7 +74,7 @@ func init() {
 	root.HandleFunc("/api/v1/todaysGames/{league}", todaysGamesHandler)                      //Complete
 	root.HandleFunc("/api/v1/tomorrowGames/{league}", tomorrowGamesHandler)                  //Complete
 	root.HandleFunc("/api/v1/games/{team}", gamesForTeamHandler)                             //Complete
-	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandeler)             //Complete
+	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandler)              //Complete
 	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)        //Complete
 	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)             //Complete
 	// root.HandleFunc("/api/v1/facilitys", facilityHandler)
@@ -133,35 +149,33 @@ func teamsForFacilityHandler(w http.ResponseWriter, r *http.Request) {
 /*
 Get the games for a sepcific division between the start date and the end date formatted like yyyy-MM-dd hh:mm:ss ex: 2015-12-10 11:48:59
 */
-func divisionGamesHandeler(w http.ResponseWriter, r *http.Request) {
+func divisionGamesHandler(w http.ResponseWriter, r *http.Request) {
 	facility := r.FormValue("facility")
 	vars := mux.Vars(r)
 	division := vars["division"]
 	startDate := r.FormValue("startDate")
 	endDate := r.FormValue("endDate")
-	var buffer bytes.Buffer
+    if(facility == "") {
+        facility = "0"
+    }
+    if(startDate == "") {
+        startDate = "1900-01-01"
+    }
+    if(endDate == "") {
+        endDate = "3100-01-01"
+    }
 
-	buffer.WriteString("SELECT f1.name AS field, f1.address AS address, a2.name AS hometeam, a1.name AS awayteam, games.gamesdatetime, games.hometeamscore, games.awayteamscore ")
-	buffer.WriteString("FROM games ")
-	buffer.WriteString("INNER JOIN fields f1 ON f1.id=games.field ")
-	buffer.WriteString("INNER JOIN teams a1 ON games.awayteam=a1.teamid ")
-	buffer.WriteString("INNER JOIN teams a2 ON games.hometeam=a2.teamid ")
-	buffer.WriteString("WHERE a1.facility=")
-	buffer.WriteString(facility)
-	buffer.WriteString(" AND a2.facility=")
-	buffer.WriteString(facility)
-	buffer.WriteString(" AND a1.division='")
-	buffer.WriteString(division)
-	buffer.WriteString("' AND a2.division='")
-	buffer.WriteString(division)
-	buffer.WriteString("' AND games.gamesdatetime >= '")
-	buffer.WriteString(startDate)
-	buffer.WriteString("' AND games.gamesdatetime <= '")
-	buffer.WriteString(endDate)
-	buffer.WriteString("' ORDER BY games.gamesdatetime;")
-	fmt.Println(buffer.String())
-
-	rows, err := db.Query(buffer.String())
+	rows, err := db.Query("SELECT f1.name AS field, f1.address AS address, a2.name AS hometeam, a1.name AS awayteam, games.gamesdatetime, games.hometeamscore, games.awayteamscore FROM games " +
+                            "INNER JOIN fields f1 ON f1.id=games.field " +
+                            "INNER JOIN teams a1 ON games.awayteam=a1.teamid " +
+                            "INNER JOIN teams a2 ON games.hometeam=a2.teamid " +
+                            "WHERE a1.facility=$1 " +
+                            "AND a2.facility=$1 " +
+                            "AND a1.division=$2 " +
+                            "AND a2.division=$2 " +
+                            "AND games.gamesdatetime >= $3 " +
+                            "AND games.gamesdatetime <= $4 " +
+                            "ORDER BY games.gamesdatetime", facility, division, startDate, endDate)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -458,22 +472,15 @@ Returns all the games fora  specific team
 func gamesForTeamHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	team := vars["team"]
-	var buffer bytes.Buffer
 
-	buffer.WriteString("SELECT f1.name AS field, f1.address AS address, a2.name AS hometeam, a1.name AS awayteam, games.gamesdatetime, games.hometeamscore, games.awayteamscore ")
-	buffer.WriteString("FROM games ")
-	buffer.WriteString("INNER JOIN fields f1 ON f1.id=games.field ")
-	buffer.WriteString("INNER JOIN teams a1 ON games.awayteam=a1.teamid ")
-	buffer.WriteString("INNER JOIN teams a2 ON games.hometeam=a2.teamid ")
-	buffer.WriteString("WHERE games.awayteam='")
-	buffer.WriteString(team)
-	buffer.WriteString("' OR games.hometeam='")
-	buffer.WriteString(team)
-	buffer.WriteString("' ORDER BY games.gamesdatetime;")
-
-	fmt.Println(buffer.String())
-
-	rows, err := db.Query(buffer.String())
+	rows, err := db.Query("SELECT f1.name AS field, f1.address AS address, a2.name AS hometeam, a1.name AS awayteam, games.gamesdatetime, games.hometeamscore, games.awayteamscore " +
+                            "FROM games " +
+                            "INNER JOIN fields f1 ON f1.id=games.field " +
+                            "INNER JOIN teams a1 ON games.awayteam=a1.teamid " +
+                            "INNER JOIN teams a2 ON games.hometeam=a2.teamid " +
+                            "WHERE games.awayteam=$1 " +
+                            "OR games.hometeam=$1 " +
+                            "ORDER BY games.gamesdatetime", team)
 	if err != nil {
 		log.Fatal(err)
 	}
