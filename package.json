@@ -17,6 +17,7 @@
     "parse-react": "*"
   },
   "dependencies": {
-    "axios": "^0.8.1"
+    "axios": "^0.8.1",
+    "react-autocomplete": "^0.1.4"
   }
 }
