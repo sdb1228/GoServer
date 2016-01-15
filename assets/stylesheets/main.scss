@@ -7,17 +7,20 @@ input{
 .appstorebutton {
   height: 80px;
   width: 185px;
-  margin: 50px;
   position: relative;
   overflow: hidden;
 }
  
-.iphone {
-  background: #7b7a7f;
+.titleHeader{
+  margin-bottom: 0px;
 }
 .appstorebutton a {
   color: white;
   text-decoration: none;
+}
+.image{
+    width: 180px; /* you can use % */
+    height: auto;
 }
  
 .appstorebutton p {
@@ -28,6 +31,23 @@ input{
   width: 180px;
 }
  
-.appstorebutton p small {
-  font-size: 15px;
+.androidMargin{
+  margin-left: 20px;
+}
+.root {
+  text-align: center;
+}
+ul {
+    width: 40%;
+    margin: auto;
+
+}
+td{
+  text-align: center; 
+}
+th{
+  text-align: center; 
+}
+.spacing{
+  margin-bottom: 300px;
 }

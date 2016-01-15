@@ -14,10 +14,19 @@ func init() {
 	// assets
 	root.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
 
-	// polls
-	polls := root.PathPrefix("/polls").Subrouter()
-	polls.Methods("POST").Path("/").HandlerFunc(httpCreatePoll)
-	polls.Methods("GET").Path("/{key}/").HandlerFunc(httpShowPoll)
+	// API endpoints
+	root.HandleFunc("/api/v1/teams/", teamsHandler)                                          //Complete
+	root.HandleFunc("/api/v1/teams/{leagueId}", teamsForFacilityHandler)                     //Complete
+	root.HandleFunc("/api/v1/favorites/{team}", addFavoriteTeamHandler).Methods("POST")      //Complete
+	root.HandleFunc("/api/v1/favorites/{team}", removeFavoriteTeamHandler).Methods("DELETE") //Complete
+	root.HandleFunc("/api/v1/favorites", favoriteTeamsHandler)                               //Complete
+	root.HandleFunc("/api/v1/favorites/games/", favoriteTeamsGamesHandler)                   //Complete
+	root.HandleFunc("/api/v1/todaysGames/{league}", todaysGamesHandler)                      //Complete
+	root.HandleFunc("/api/v1/tomorrowGames/{league}", tomorrowGamesHandler)                  //Complete
+	root.HandleFunc("/api/v1/games/{team}", gamesForTeamHandler)                             //Complete
+	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandler)              //Complete
+	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)        //Complete
+	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)             //Complete
 
 	http.Handle("/", root)
 }

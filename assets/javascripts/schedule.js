@@ -1,33 +1,27 @@
+/**
+ * Copyright © 2014-2016 SoccerLC. All rights reserved.
+ *
+ */
+
 import React, { Component, PropTypes } from 'react';
+var axios = require('axios');
 
 let styles = {
-  item: {
-    padding: '2px 6px',
-    cursor: 'default'
-  },
   div: {
-    margin: '0 auto',
+    margin: '0 auto'
   },
-  highlightedItem: {
-    color: 'white',
-    background: 'hsl(200, 50%, 50%)',
-    padding: '2px 6px',
-    cursor: 'default'
-  },
-  divStyle: {
-    "background-color": 'black'
-  }, 
-  menu: {
-    borderRadius: '3px',
-    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.1)',
-    background: 'rgba(255, 255, 255, 0.9)',
-    padding: '2px 0',
-    fontSize: '90%',
-    position: 'fixed',
-    overflow: 'auto',
-    maxHeight: '50%',
+  tableContainer: {
+    marginTop: '20px'
   }
 }
+let weekday = new Array(7);
+weekday[0]=  "Sunday";
+weekday[1] = "Monday";
+weekday[2] = "Tuesday";
+weekday[3] = "Wednesday";
+weekday[4] = "Thursday";
+weekday[5] = "Friday";
+weekday[6] = "Saturday";
 var Schedule = React.createClass({
 
   getInitialState () {
@@ -37,51 +31,14 @@ var Schedule = React.createClass({
     if (nextProps.team == null) {
       return;
     }
-    $.ajax({
-          type: "GET", 
-          url: "https://api.parse.com:443/1/classes/Games",
-          headers: 
-      { 
-        'X-Parse-Application-Id': 'UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv',
-        'X-Parse-REST-API-Key': 'g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b'
-      },
-          data: {"where": {"$or":[{"awayTeam": nextProps.team.teamId},{"homeTeam":nextProps.team.teamId}]}},
-          dataType: "json",
-          success: function(response) {
-            this.getTeamNames(response.results)
-            debugger
-            this.setState({teams: response.results, loading: false});
-          }.bind(this),
-          error: function(xhr, ajaxOptions, thrownError) { alert(xhr.responseText); }
-    });
-  },
-  getTeamNames(games){
-    for (var i = 0; i < games.length; i++) {
-      var homeTeam = games[i].homeTeam; 
-      var awayTeam = games[i].awayTeam;
-      if (homeTeam == this.props.team.teamId) {
-        $.ajax({
-              type: "GET", 
-              url: "https://api.parse.com/1/classes/Teams",
-              headers: 
-          { 
-            'X-Parse-Application-Id': 'UnWG5wrHS2fIl7xpzxHqStks4ei4sc6p0plxUOGv',
-            'X-Parse-REST-API-Key': 'g7Cj2NeORxfnKRXCHVv3ZcxxjRNpPU1RVuUxX19b'
-          },
-              data: {"where": {"$relatedTo":{"object":{"__type": "Pointer", "className": "Games", "objectId": games[i].objectId}, "key": "awayTeamPointer"}}},
-              dataType: "json",
-              success: function(response) {
-                var elementPos = this.state.teams.map(function(x) {return x.awayTeam; }).indexOf(response.results[0].teamId);
-                this.state.teams[elementPos].awayTeamName = response.results[0].name
-              }.bind(this),
-              error: function(xhr, ajaxOptions, thrownError) { alert(xhr.responseText); }
-        });
-      }
-      else{
-        //home team needed
-        awayTeam = this.props.team.name;
-      }
-    }
+    var url = 'http://localhost:8960/api/v1/games/' + nextProps.team.teamid
+    axios.get(url)
+      .then(function (response) {
+        this.setState({games: response.data, loading: false});
+      }.bind(this))
+      .catch(function (response) {
+        console.log(response);
+      });
   },
 
   render () {
@@ -91,30 +48,27 @@ var Schedule = React.createClass({
         content = [<tr><td>loading</td></tr>]  
       }
       else{
-        content = [<tr><td>When</td><td>Where</td><td>Home Team</td><td>Home Team Score</td><td>Away Team Score</td><td>Away Team</td></tr>]
-        for (var i =0; i < this.state.teams.length; i++) {
-          content.push(this.renderItem(this.state.teams[i]));
+        content = [<tr><th>When</th><th>Where</th><th>Home Team</th><th>Home Team Score</th><th>Away Team Score</th><th>Away Team</th></tr>]
+        for (var i =0; i < this.state.games.length; i++) {
+          content.push(this.renderItem(this.state.games[i]));
         };
       }
     }
     else{
-      content = <tr><td></td></tr>
+      content = <tr></tr>
     }
-    return( <div><table style={styles.div}>
+    return( <div style={styles.tableContainer}><table className="table table-striped">
             <tbody>{content}</tbody>
             </table></div>);
   },
 
   renderItem (item) {
-    var homeTeam = item.homeTeam;
-    var awayTeam = item.awayTeam;
-    if (item.homeTeam == this.props.team.teamId) {
-      homeTeam = this.props.team.name;
-    }
-    else{
-      awayTeam = this.props.team.name;
-    }
-    return (<tr><td>{item.date}</td><td>{item.field}</td><td>{homeTeam}</td><td>{item.homeTeamScore}</td><td>{item.awayTeamScore}</td><td>{awayTeam}</td></tr>)
+    var date = new Date(item.gamesdatetime)
+    var hours = date.getUTCHours()
+    var suffix = (hours >= 12)? 'PM' : 'AM';
+    var parsedHour = ((hours + 11) % 12 + 1);
+    var stringDate = weekday[date.getDay()] + " " + (date.getMonth() + 1) + "-" + (date.getDate()) + "-" + date.getFullYear() + " " + parsedHour + ":" + date.getMinutes() + suffix
+    return (<tr><td>{stringDate}</td><td>{item.field}</td><td>{item.hometeam}</td><td>{item.hometeamscore}</td><td>{item.awayteamscore}</td><td>{item.awayteam}</td></tr>)
   }
 })
 
