@@ -1,3 +1,6 @@
 # GoServer
 To run this make sure your go path is set correctly.  From there if it is set correctly you should be able to run `go install -tags dev .; $GOPATH/bin/soccerlc`.  This will run it in development mode. To run it in production run without the tag `go install .; $GOPATH/bin/soccerlc`.  The main difference between the tags and no tags is the fact that `-tags dev` will reload the templates folder everytime a request is made to the server.  
 If you are planning to do any development on the front end you will first need to run a `npm install`  this will download all necessary js dependencys.  From there you will want to either run webpack by running `node_modules/.bin/webpack` or run `node_modules/.bin/webpack --watch` to have webpack continuely compile your assets as you modify files.  If you add another file you will need to add it to the webpack config for it to recompile your assets.
+
+
+You can also run the app in docker.  First download docker from docker.com.  You will then go into the project run a `docker build` and then run `docker run -p "8960:8960" <dockerContainerID>`  Afterwards you will need to in another tab run `docker-machine default ip` and grab that ip and go to it in your browser by doing `dockermachineip:8960`
