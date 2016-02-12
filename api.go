@@ -6,12 +6,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	_ "github.com/lib/pq"
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2/google"
+	googleapi "google.golang.org/api/googleapi"
+	storage "google.golang.org/api/storage/v1"
+)
+
+const (
+	// This scope allows the application full control over resources in Google Cloud Storage
+	scope = storage.DevstorageFullControlScope
+)
+
+var (
+	projectID  = "goapi-1193"
+	bucketName = "soccerlcvideostorage"
 )
 
 var db *sql.DB
@@ -20,6 +35,10 @@ type team struct {
 	Name     string `json:"name"`
 	Division string `json:"division"`
 	Teamid   string `json:"teamid"`
+}
+type Success struct {
+	Code    int    `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 type division struct {
@@ -65,6 +84,13 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+/*
+Logs Fatal errors
+*/
+func fatalf(service *storage.Service, errorMessage string, args ...interface{}) {
+	log.Fatalf("Dying with error:\n"+errorMessage, args...)
 }
 
 /*
@@ -125,6 +151,90 @@ func teamsForFacilityHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	encoder.Encode(&results)
+}
+
+/*
+This method handles the storage and linking of a users video
+*/
+func videoUploadHandler(w http.ResponseWriter, r *http.Request) {
+	buffer := bytes.NewBuffer(nil)
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+
+	installationId := r.FormValue("installationId")
+
+	r.ParseForm()
+	uploadFile, uploadFileHeaders, err := r.FormFile("video")
+	if uploadFile == nil {
+		fmt.Println("uploadFIle is nil")
+		encoder.Encode("{Response: Video Uploaded}")
+
+	}
+	contentLength := uploadFileHeaders.Header.Get("Content-Length")
+	if contentLength != "" {
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			encoder.Encode("{Response: Video Uploaded}")
+		}
+	}
+
+	_, err = io.Copy(buffer, uploadFile)
+	if err != nil {
+		http.Error(w, "Failed to receive entity", http.StatusInternalServerError)
+		encoder.Encode("{Response: Video Uploaded}")
+	}
+
+	// Off To Google Storage
+	err = googleCloudStorage(buffer, installationId)
+	if err == nil {
+		response := Success{}
+		response.Code = 200
+		response.Message = "Video Uploaded"
+		encoder.Encode(&response)
+	} else {
+		encoder.Encode(&err)
+	}
+}
+
+/*
+Uploads a byte buffer to the google cloud storage
+*/
+func googleCloudStorage(video *bytes.Buffer, objectName string) error {
+	// Authentication is provided by the gcloud tool when running locally, and
+	// by the associated service account when running on Compute Engine.
+	client, err := google.DefaultClient(context.Background(), scope)
+	if err != nil {
+		log.Printf("Unable to get default client: %v", err)
+		return err
+	}
+	service, err := storage.New(client)
+	if err != nil {
+		log.Printf("Unable to create storage service: %v", err)
+		return err
+	}
+
+	if _, err := service.Buckets.Get(bucketName).Do(); err == nil {
+	} else {
+		// Create a bucket.
+		fmt.Println("Bucket Doesn't exist.")
+		return err
+	}
+
+	// Insert an object into a bucket.
+	object := &storage.Object{Name: objectName}
+	if err != nil {
+		log.Printf("Error Saving File: %v", err)
+		return err
+	}
+	videoContentType := googleapi.ContentType("video/quicktime")
+	if res, err := service.Objects.Insert(bucketName, object).PredefinedAcl("publicRead").Media(video, videoContentType).Do(); err == nil {
+		log.Printf("Created object %v at location %v\n\n", res.Name, res.SelfLink)
+		return nil
+	} else {
+		log.Printf("Objects.Insert failed: %v", err)
+		return err
+	}
+	return nil
 }
 
 /*
