@@ -185,7 +185,7 @@ func videoUploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Off To Google Storage
-	err = googleCloudStorage(buffer, installationId)
+	err = googleCloudStorage(buffer, installationId, installationId, "testing@gmail.com")
 	if err == nil {
 		response := Success{}
 		response.Code = 200
@@ -199,7 +199,7 @@ func videoUploadHandler(w http.ResponseWriter, r *http.Request) {
 /*
 Uploads a byte buffer to the google cloud storage
 */
-func googleCloudStorage(video *bytes.Buffer, objectName string) error {
+func googleCloudStorage(video *bytes.Buffer, objectName string, installationID string, email string) error {
 	// Authentication is provided by the gcloud tool when running locally, and
 	// by the associated service account when running on Compute Engine.
 	client, err := google.DefaultClient(context.Background(), scope)
@@ -229,11 +229,27 @@ func googleCloudStorage(video *bytes.Buffer, objectName string) error {
 	videoContentType := googleapi.ContentType("video/quicktime")
 	if res, err := service.Objects.Insert(bucketName, object).PredefinedAcl("publicRead").Media(video, videoContentType).Do(); err == nil {
 		log.Printf("Created object %v at location %v\n\n", res.Name, res.SelfLink)
+		var buffer bytes.Buffer
+		buffer.WriteString("https://storage.googleapis.com/")
+		buffer.WriteString(bucketName)
+		buffer.WriteString("/")
+		buffer.WriteString(objectName)
+		err = linkVideoToDatabse(buffer.String(), installationID, email)
+		if err != nil {
+			return err
+		}
 		return nil
 	} else {
 		log.Printf("Objects.Insert failed: %v", err)
 		return err
 	}
+	return nil
+}
+
+/*
+Stores video into personal database
+*/
+func linkVideoToDatabse(url, installationID, email string) error {
 	return nil
 }
 
