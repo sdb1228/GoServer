@@ -13,6 +13,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	googleapi "google.golang.org/api/googleapi"
@@ -160,8 +161,11 @@ func videoUploadHandler(w http.ResponseWriter, r *http.Request) {
 	buffer := bytes.NewBuffer(nil)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
-
+	var videoName bytes.Buffer
 	installationId := r.FormValue("installationId")
+	email := r.FormValue("email")
+	videoName.WriteString(uuid.NewV4().String())
+	videoName.WriteString(".mp4")
 
 	r.ParseForm()
 	uploadFile, uploadFileHeaders, err := r.FormFile("video")
@@ -185,7 +189,7 @@ func videoUploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Off To Google Storage
-	err = googleCloudStorage(buffer, installationId, installationId, "testing@gmail.com")
+	err = googleCloudStorage(buffer, videoName.String(), installationId, email)
 	if err == nil {
 		response := Success{}
 		response.Code = 200
@@ -226,7 +230,7 @@ func googleCloudStorage(video *bytes.Buffer, objectName string, installationID s
 		log.Printf("Error Saving File: %v", err)
 		return err
 	}
-	videoContentType := googleapi.ContentType("video/quicktime")
+	videoContentType := googleapi.ContentType("video/mp4")
 	if res, err := service.Objects.Insert(bucketName, object).PredefinedAcl("publicRead").Media(video, videoContentType).Do(); err == nil {
 		log.Printf("Created object %v at location %v\n\n", res.Name, res.SelfLink)
 		var buffer bytes.Buffer
@@ -250,6 +254,15 @@ func googleCloudStorage(video *bytes.Buffer, objectName string, installationID s
 Stores video into personal database
 */
 func linkVideoToDatabse(url, installationID, email string) error {
+	_, err := db.Exec(
+		"INSERT INTO videos (url, email, installation_id) VALUES ($1, $2, $3);",
+		url,
+		email,
+		installationID,
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
