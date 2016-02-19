@@ -27,7 +27,8 @@ func init() {
 	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandler)              //Complete
 	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)        //Complete
 	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)             //Complete
-	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)
+	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)                               //Complete
+	root.HandleFunc("/api/v1/videos", indexVideoHandler)
 
 	http.Handle("/", root)
 }

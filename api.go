@@ -52,6 +52,11 @@ type installationTeam struct {
 	Teamid        string `json:"teamid"`
 	InstalltionId string `json:"installationId"`
 }
+type video struct {
+	Id    *int   `json:"id"`
+	Url   string `json:"url"`
+	Likes *int   `json:"likes"`
+}
 
 type game struct {
 	Awayteam      string    `json:"awayteam"`
@@ -267,6 +272,30 @@ func linkVideoToDatabse(url, installationID, email string) error {
 }
 
 /*
+Gets all videos and orders them from last inserted.  TODO make paginated.
+*/
+func indexVideoHandler(w http.ResponseWriter, r *http.Request) {
+
+	var buffer bytes.Buffer
+	buffer.WriteString("SELECT id, url, likes FROM videos ORDER BY id DESC;")
+	rows, err := db.Query(buffer.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	results := []video{}
+	for rows.Next() {
+		var v video
+		rows.Scan(&v.Id, &v.Url, &v.Likes)
+		results = append(results, v)
+	}
+	fmt.Printf("%v", results)
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encoder.Encode(&results)
+}
+
+/*
 Get the games for a sepcific division between the start date and the end date formatted like yyyy-MM-dd hh:mm:ss ex: 2015-12-10 11:48:59
 */
 func divisionGamesHandler(w http.ResponseWriter, r *http.Request) {
@@ -431,7 +460,6 @@ func favoriteTeamsGamesHandler(w http.ResponseWriter, r *http.Request) {
 Returns the games of a specific facility for today
 */
 func todaysGamesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Failed today")
 	vars := mux.Vars(r)
 	league := vars["league"]
 	var buffer bytes.Buffer
@@ -544,7 +572,6 @@ func addFavoriteTeamHandler(w http.ResponseWriter, r *http.Request) {
 Returns all the games for tomorrow for a specific facility
 */
 func tomorrowGamesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Failed Tomorrow")
 	vars := mux.Vars(r)
 	league := vars["league"]
 	var buffer bytes.Buffer
