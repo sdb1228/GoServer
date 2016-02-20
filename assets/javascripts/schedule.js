@@ -31,7 +31,7 @@ var Schedule = React.createClass({
     if (nextProps.team == null) {
       return;
     }
-    var url = 'http://localhost:8960/api/v1/games/' + nextProps.team.teamid
+    var url = 'http://soccerlc.com/api/v1/games/' + nextProps.team.teamid
     axios.get(url)
       .then(function (response) {
         this.setState({games: response.data, loading: false});

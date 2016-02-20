@@ -8,7 +8,3 @@ RUN curl --silent --location https://deb.nodesource.com/setup_4.x | bash -
 
 RUN apt-get install nodejs -y
 
-COPY . .
-
-RUN npm install 
-RUN node_modules/.bin/webpack

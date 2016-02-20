@@ -1,15 +1,28 @@
 package main
 
 import (
+	"bytes"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
+	"strconv"
+
+	_ "github.com/lib/pq"
 )
+
+type Page struct {
+	URL  string
+	Body string
+}
 
 func init() {
 	root := mux.NewRouter()
 
 	// root
 	root.HandleFunc("/", indexHandler)
+
+	// templates
+	root.HandleFunc("/video/{video}", videoTemplateHandler)
 
 	// assets
 	root.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
@@ -28,7 +41,8 @@ func init() {
 	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)        //Complete
 	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)             //Complete
 	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)                               //Complete
-	root.HandleFunc("/api/v1/videos", indexVideoHandler)
+	root.HandleFunc("/api/v1/videos", indexVideoHandler)                                     //Complete
+	root.HandleFunc("/api/v1/videos/{id}/like", likeVideoHandler)                            //Complete
 
 	http.Handle("/", root)
 }
@@ -40,4 +54,35 @@ func main() {
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	t := lookupTemplate("index")
 	t.Execute(w, nil)
+}
+
+func videoTemplateHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	videoId := vars["video"]
+	_, interror := strconv.ParseInt(videoId, 10, 64)
+	if interror != nil {
+		e := lookupTemplate("error")
+		e.Execute(w, nil)
+		return
+	}
+	t := lookupTemplate("video")
+	var buffer bytes.Buffer
+	buffer.WriteString("SELECT id, url, likes FROM videos WHERE id='")
+	buffer.WriteString(videoId)
+	buffer.WriteString("';")
+	rows, err := db.Query(buffer.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+	var v video
+	for rows.Next() {
+		rows.Scan(&v.Id, &v.Url, &v.Likes)
+	}
+	if v.Url == "" {
+		e := lookupTemplate("error")
+		e.Execute(w, nil)
+		return
+	}
+	p := &Page{URL: v.Url}
+	t.Execute(w, p)
 }

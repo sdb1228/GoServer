@@ -296,7 +296,14 @@ func indexVideoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-Get the games for a sepcific division between the start date and the end date formatted like yyyy-MM-dd hh:mm:ss ex: 2015-12-10 11:48:59
+Registers a like with a video id
+*/
+func likeVideoHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+/*
+Get the games for a specific division between the start date and the end date formatted like yyyy-MM-dd hh:mm:ss ex: 2015-12-10 11:48:59
 */
 func divisionGamesHandler(w http.ResponseWriter, r *http.Request) {
 	facility := r.FormValue("facility")
