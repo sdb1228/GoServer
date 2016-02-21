@@ -8,7 +8,7 @@
 </head>
 <body>
 	<div style="text-align: left;">
-		<a href="http://soccerlc.com/"><img class="image" style="text-align: left; width: 200px; margin-left: 10px" src="/assets/SoccerLCtitle.png"/></a>
+		<a href="http://soccerlc.com//"><img class="image" style="text-align: left; width: 200px; margin-left: 10px" src="/assets/SoccerLCtitle.png"/></a>
 	</div>
 	<p style="text-align: left; margin-left: 10px">One Touch Schedules</p>
 	<div style="text-align: center;"><p><font size="6" >Oooops!  Looks like there is no video here yet.  Go make your own!</font></p></div>

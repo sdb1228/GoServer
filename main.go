@@ -42,13 +42,13 @@ func init() {
 	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)             //Complete
 	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)                               //Complete
 	root.HandleFunc("/api/v1/videos", indexVideoHandler)                                     //Complete
-	root.HandleFunc("/api/v1/videos/{id}/like", likeVideoHandler)                            //Complete
+	root.HandleFunc("/api/v1/videos/{video}/like", likeVideoHandler)                         //Complete
 
 	http.Handle("/", root)
 }
 
 func main() {
-	http.ListenAndServe(":8960", nil)
+	http.ListenAndServe(":80", nil)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,4 +1,5 @@
 from fabric.api import run, local, env, put
+from fabric.context_managers import cd
 
 def prod():
 	env.hosts = ['soccerlc.com']
@@ -13,5 +14,6 @@ def deploy():
 	build_server()
 	put("server.tar","./work/src/jess/joel.tar")
 	run('tar -xf /root/work/src/jess/joel.tar -C /root/work/src/jess')
-	run('cd /root/work/src/jess/soccerlc')
-	run('go install .; nohup $GOPATH/bin/soccerlc')
+	#run('killall /root/work/bin/soccerlc')
+	with cd('/root/work/src/jess/soccerlc'):
+		run('go install .; nohup $GOPATH/bin/soccerlc')

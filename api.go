@@ -58,6 +58,13 @@ type video struct {
 	Likes *int   `json:"likes"`
 }
 
+type videoInstallation struct {
+	Id             *int   `json:"id"`
+	Url            string `json:"url"`
+	Likes          *int   `json:"likes"`
+	InstallationId string `json:"installationId"`
+}
+
 type game struct {
 	Awayteam      string    `json:"awayteam"`
 	Hometeam      string    `json:"hometeam"`
@@ -275,18 +282,20 @@ func linkVideoToDatabse(url, installationID, email string) error {
 Gets all videos and orders them from last inserted.  TODO make paginated.
 */
 func indexVideoHandler(w http.ResponseWriter, r *http.Request) {
-
+	installationId := r.FormValue("installationId")
 	var buffer bytes.Buffer
-	buffer.WriteString("SELECT id, url, likes FROM videos ORDER BY id DESC;")
+	buffer.WriteString("SELECT videos.id, videos.url, videos.likes, lk.installationid FROM videos LEFT OUTER JOIN likes lk ON videos.id=lk.videoid AND lk.installationid='")
+	buffer.WriteString(installationId)
+	buffer.WriteString("' ORDER BY videos.id DESC;")
 	rows, err := db.Query(buffer.String())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	results := []video{}
+	results := []videoInstallation{}
 	for rows.Next() {
-		var v video
-		rows.Scan(&v.Id, &v.Url, &v.Likes)
+		var v videoInstallation
+		rows.Scan(&v.Id, &v.Url, &v.Likes, &v.InstallationId)
 		results = append(results, v)
 	}
 	fmt.Printf("%v", results)
@@ -299,7 +308,59 @@ func indexVideoHandler(w http.ResponseWriter, r *http.Request) {
 Registers a like with a video id
 */
 func likeVideoHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	video := vars["video"]
+	installationId := r.FormValue("installationId")
+	checkInstallation(installationId)
+	var buffer bytes.Buffer
+	buffer.WriteString("SELECT COUNT(*) FROM likes WHERE installationid='")
+	buffer.WriteString(installationId)
+	buffer.WriteString("' AND videoid='")
+	buffer.WriteString(video)
+	buffer.WriteString("';")
+	fmt.Println(buffer.String())
+	rows, err := db.Query(buffer.String())
+	var count int
+	for rows.Next() {
+		rows.Scan(&count)
+	}
+	if count != 0 {
+		_, err := db.Exec(
+			"DELETE FROM likes WHERE installationid=$1 AND videoid=$2;",
+			installationId,
+			video,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+		_, err = db.Exec(
+			"UPDATE videos SET likes = likes - 1 WHERE id=$1;",
+			video,
+		)
+		var results [0]string
+		w.Header().Set("Content-Type", "application/json")
+		encoder := json.NewEncoder(w)
+		encoder.Encode(&results)
+	} else {
 
+		_, err = db.Exec(
+			"INSERT INTO likes (installationid, videoid) VALUES ($1, $2);",
+			installationId,
+			video,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = db.Exec(
+			"UPDATE videos SET likes = likes + 1 WHERE id=$1;",
+			video,
+		)
+		var results [0]string
+		w.Header().Set("Content-Type", "application/json")
+		encoder := json.NewEncoder(w)
+		encoder.Encode(&results)
+	}
 }
 
 /*
