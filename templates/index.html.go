@@ -10,7 +10,7 @@
 <div style="background-color: #f6f7f6" class="jumbotron">
 	<div>
 		<a href="default.asp" style="float: right; margin-right: 40px; font-size: 20px; color: #3b3736;">Contact</a>
-		<a href="default.asp" style="float: right; margin-right: 40px; font-size: 20px; color: #3b3736;">About</a>
+		<a href="/about" style="float: right; margin-right: 40px; font-size: 20px; color: #3b3736;">About</a>
 	</div>
 	<div style="text-align: center;">
 		<img class="image" style="text-align: center; width: 400px; margin-left: 230px" src="/assets/SoccerLCtitle.png"/>

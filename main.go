@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -23,6 +24,7 @@ func init() {
 
 	// templates
 	root.HandleFunc("/video/{video}", videoTemplateHandler)
+	root.HandleFunc("/about", aboutHandler)
 
 	// assets
 	root.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
@@ -55,8 +57,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	t := lookupTemplate("index")
 	t.Execute(w, nil)
 }
-
+func aboutHandler(w http.ResponseWriter, r *http.Request) {
+	t := lookupTemplate("about")
+	t.Execute(w, nil)
+}
 func videoTemplateHandler(w http.ResponseWriter, r *http.Request) {
+	encoder := json.NewEncoder(w)
 	vars := mux.Vars(r)
 	videoId := vars["video"]
 	_, interror := strconv.ParseInt(videoId, 10, 64)
@@ -72,7 +78,11 @@ func videoTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	buffer.WriteString("';")
 	rows, err := db.Query(buffer.String())
 	if err != nil {
-		log.Fatal(err)
+		response := Response{}
+		response.Code = 500
+		response.Message = "Ooops Internal Server Error!"
+		encoder.Encode(&response)
+		log.Printf(err.Error())
 	}
 	var v video
 	for rows.Next() {

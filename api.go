@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -37,7 +39,7 @@ type team struct {
 	Division string `json:"division"`
 	Teamid   string `json:"teamid"`
 }
-type Success struct {
+type Response struct {
 	Code    int    `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
 }
@@ -89,21 +91,29 @@ func init() {
 	config := config{}
 	ferr := decoder.Decode(&config)
 	if ferr != nil {
-		fmt.Println("error:", ferr)
+		log.Fatal("Error in decoding config: ", ferr)
 	}
 
 	var err error
 	db, err = sql.Open("postgres", fmt.Sprintf("user=%v dbname=%v host=%v password=%v sslmode=disable", config.User, config.Database, config.Host, config.Password))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error in connecting to postgres databse: ", err)
 	}
 }
 
-/*
-Logs Fatal errors
-*/
-func fatalf(service *storage.Service, errorMessage string, args ...interface{}) {
-	log.Fatalf("Dying with error:\n"+errorMessage, args...)
+func credential_check(token string) error {
+	if token != "XCF9-14PV-NLS1-3VCA" {
+		return errors.New("Token does not match")
+	}
+	return nil
+
+}
+func response_builder(code int, message string) *Response {
+	response := Response{}
+	response.Code = code
+	response.Message = message
+	return &response
+
 }
 
 /*
@@ -111,7 +121,20 @@ This method returns all the divisions of a specific facility/league sorted by di
 */
 func facilityDivisionsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	encoder := json.NewEncoder(w)
+	// token := vars["token"]
+	// err := credential_check(token)
+	// if err != nil {
+	// 	encoder.Encode(response_builder(403, "You don't have access to obtain that information"))
+	// 	return
+	// }
 	league := vars["league"]
+	err := verifyInteger(league)
+	if err != nil {
+		log.Println("Error league is not an integer : ", err)
+		encoder.Encode(response_builder(403, "The league you have requested doesn't exist"))
+		return
+	}
 	var buffer bytes.Buffer
 	buffer.WriteString("SELECT DISTINCT division FROM teams WHERE facility=")
 	buffer.WriteString(league)
@@ -119,9 +142,10 @@ func facilityDivisionsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(buffer.String())
 	rows, err := db.Query(buffer.String())
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error in DB query of facility division: ", err)
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+		return
 	}
-
 	results := []division{}
 	for rows.Next() {
 		var d division
@@ -130,17 +154,36 @@ func facilityDivisionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Printf("%v", results)
 	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
 	encoder.Encode(&results)
 }
 
 /*
-This method handles the returning of all the teams from a given facility ID
+This method handles the returning of all the teams from a given facility ID and returns the installation id if the team has been favorited by installationID
 */
 func teamsForFacilityHandler(w http.ResponseWriter, r *http.Request) {
 	installationId := r.FormValue("installationId")
+	encoder := json.NewEncoder(w)
 	vars := mux.Vars(r)
+	// token := vars["token"]
+	// err := credential_check(token)
+	// if err != nil {
+	// 	encoder.Encode(response_builder(403, "You don't have access to obtain that information"))
+	// 	return
+	// }
+	err := checkInstallation(installationId)
+	if err != nil {
+		log.Println("Error in querying for installation ID: ", err)
+		encoder.Encode(response_builder(403, "There was a problem with your installationID"))
+		return
+	}
 	league := vars["leagueId"]
+	err = verifyInteger(league)
+	if err != nil {
+		log.Println("Error league is not an integer : ", err)
+		encoder.Encode(response_builder(403, "The league you have requested doesn't exist"))
+		return
+	}
+
 	var buffer bytes.Buffer
 	fmt.Println(installationId)
 	buffer.WriteString("SELECT name, division, teams.teamid, installationid FROM teams LEFT OUTER JOIN favorites f1 ON f1.installationid='")
@@ -151,7 +194,9 @@ func teamsForFacilityHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(buffer.String())
 	rows, err := db.Query(buffer.String())
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error in DB query of teams for facility: ", err)
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+		return
 	}
 
 	results := []installationTeam{}
@@ -162,8 +207,18 @@ func teamsForFacilityHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Printf("%v", results)
 	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
 	encoder.Encode(&results)
+}
+
+/*
+Verifys the Integer given is actually an integer
+*/
+func verifyInteger(integer string) error {
+	_, interror := strconv.ParseInt(integer, 10, 64)
+	if interror != nil {
+		return interror
+	}
+	return nil
 }
 
 /*
@@ -178,7 +233,7 @@ func videoUploadHandler(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	videoName.WriteString(uuid.NewV4().String())
 	videoName.WriteString(".mp4")
-
+	fmt.Println("off to google")
 	r.ParseForm()
 	uploadFile, uploadFileHeaders, err := r.FormFile("video")
 	if uploadFile == nil {
@@ -201,9 +256,10 @@ func videoUploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Off To Google Storage
+
 	err = googleCloudStorage(buffer, videoName.String(), installationId, email)
 	if err == nil {
-		response := Success{}
+		response := Response{}
 		response.Code = 200
 		response.Message = "Video Uploaded"
 		encoder.Encode(&response)
@@ -311,7 +367,7 @@ func likeVideoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	video := vars["video"]
 	installationId := r.FormValue("installationId")
-	checkInstallation(installationId)
+	err := checkInstallation(installationId)
 	var buffer bytes.Buffer
 	buffer.WriteString("SELECT COUNT(*) FROM likes WHERE installationid='")
 	buffer.WriteString(installationId)
@@ -467,7 +523,7 @@ Returns all the teams that a certain device has favorited
 */
 func favoriteTeamsHandler(w http.ResponseWriter, r *http.Request) {
 	installationId := r.FormValue("installationId")
-	checkInstallation(installationId)
+	err := checkInstallation(installationId)
 	fmt.Println(installationId)
 	var buffer bytes.Buffer
 	buffer.WriteString("SELECT a1.name, a1.division, favorites.teamid FROM favorites INNER JOIN teams a1 ON favorites.teamid=a1.teamid WHERE installationid='")
@@ -495,9 +551,8 @@ Returns all the games of an installations favorite teams including address of th
 
 func favoriteTeamsGamesHandler(w http.ResponseWriter, r *http.Request) {
 	installationId := r.FormValue("installationId")
-	checkInstallation(installationId)
+	err := checkInstallation(installationId)
 	var buffer bytes.Buffer
-
 	buffer.WriteString("SELECT f1.name AS field, f1.address AS address, a2.name AS hometeam, a1.name AS awayteam, games.gamesdatetime, games.hometeamscore, games.awayteamscore ")
 	buffer.WriteString("FROM favorites, games ")
 	buffer.WriteString("LEFT OUTER JOIN fields f1 ON f1.id=games.field ")
@@ -505,7 +560,9 @@ func favoriteTeamsGamesHandler(w http.ResponseWriter, r *http.Request) {
 	buffer.WriteString("LEFT OUTER JOIN teams a2 ON games.hometeam=a2.teamid ")
 	buffer.WriteString("WHERE favorites.installationid='")
 	buffer.WriteString(installationId)
-	buffer.WriteString("' AND (games.hometeam=favorites.teamid OR games.awayteam=favorites.teamid) AND games.gamesdatetime >= now()::timestamp ORDER BY games.gamesdatetime;")
+	buffer.WriteString("' AND (games.hometeam=favorites.teamid OR games.awayteam=favorites.teamid) AND games.gamesdatetime >= (now()::timestamp - '1 day'::interval) ORDER BY games.gamesdatetime;")
+
+	fmt.Println(buffer.String())
 	rows, err := db.Query(buffer.String())
 	if err != nil {
 		log.Fatal(err)
@@ -575,8 +632,8 @@ func removeFavoriteTeamHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	teamId := vars["team"]
 	installationId := r.FormValue("installationId")
-	checkInstallation(installationId)
-	_, err := db.Exec(
+	err := checkInstallation(installationId)
+	_, err = db.Exec(
 		"DELETE FROM favorites WHERE installationid=$1 AND teamid=$2;",
 		installationId,
 		teamId,
@@ -599,7 +656,7 @@ func addFavoriteTeamHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	teamId := vars["team"]
 	installationId := r.FormValue("installationId")
-	checkInstallation(installationId)
+	err := checkInstallation(installationId)
 	var buffer bytes.Buffer
 	buffer.WriteString("SELECT COUNT(*) FROM favorites WHERE installationid='")
 	buffer.WriteString(installationId)
@@ -716,14 +773,15 @@ func gamesForTeamHandler(w http.ResponseWriter, r *http.Request) {
 Checks to see if we have the current installation in the database.  If we don't we will insert it
 */
 
-func checkInstallation(installationId string) {
+func checkInstallation(installationId string) error {
 	var buffer bytes.Buffer
 	buffer.WriteString("SELECT COUNT(*) FROM installation where installationid='")
 	buffer.WriteString(installationId)
 	buffer.WriteString("';")
 	rows, err := db.Query(buffer.String())
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error in querying for installation ID: ", err)
+		return err
 	}
 
 	var count int
@@ -736,8 +794,10 @@ func checkInstallation(installationId string) {
 			installationId,
 		)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Error in inserting installation : ", err)
+			return err
 		}
 	}
 
+	return nil
 }

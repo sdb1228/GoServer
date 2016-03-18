@@ -6,14 +6,14 @@ def prod():
 	env.user = 'root'
 
 def build_server():
-	#local('docker build -t server .')
-	#local('docker run -it -v "$PWD":/usr/src/myapp -w /usr/src/myapp server go build')
-	local('tar -cvf server.tar ../soccerlc')
+	local('docker build -t server .')
+	local('docker run -it -v "$PWD":/usr/src/myapp -w /usr/src/myapp server go build')
+	local('tar -cvf server.tar -C . .')
 
 def deploy():
 	build_server()
-	put("server.tar","./work/src/jess/joel.tar")
-	run('tar -xf /root/work/src/jess/joel.tar -C /root/work/src/jess')
-	#run('killall /root/work/bin/soccerlc')
-	with cd('/root/work/src/jess/soccerlc'):
-		run('go install .; nohup $GOPATH/bin/soccerlc')
+	run("service soccerlc stop")
+	run("rm -r /srv/*")
+	put("server.tar","./work/src/soccerlcprod/server.tar")
+	run('tar -xf /root/work/src/soccerlcprod/server.tar -C /srv')
+	run("service soccerlc restart")
