@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>SoccerLC</title>
-	<link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/>
+	<link rel="icon" href="/assets/favicon.ico" />
 	<link rel="stylesheet" href="/assets/main.css"></link>
 	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
 </head>
