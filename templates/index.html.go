@@ -9,7 +9,7 @@
 <body style="background-color: #f6f7f6; height: 1000px;">
 <div style="background-color: #f6f7f6" class="jumbotron">
 	<div>
-		<a href="default.asp" style="float: right; margin-right: 40px; font-size: 20px; color: #3b3736;">Contact</a>
+		<a href="/contact" style="float: right; margin-right: 40px; font-size: 20px; color: #3b3736;">Contact</a>
 		<a href="/about" style="float: right; margin-right: 40px; font-size: 20px; color: #3b3736;">About</a>
 	</div>
 	<div style="text-align: center;">

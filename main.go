@@ -25,6 +25,7 @@ func init() {
 	// templates
 	root.HandleFunc("/video/{video}", videoTemplateHandler)
 	root.HandleFunc("/about", aboutHandler)
+	root.HandleFunc("/contact", contactHandler)
 
 	// assets
 	root.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
@@ -55,6 +56,10 @@ func main() {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	t := lookupTemplate("index")
+	t.Execute(w, nil)
+}
+func contactHandler(w http.ResponseWriter, r *http.Request) {
+	t := lookupTemplate("contact")
 	t.Execute(w, nil)
 }
 func aboutHandler(w http.ResponseWriter, r *http.Request) {

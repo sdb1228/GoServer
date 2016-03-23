@@ -190,7 +190,7 @@ func teamsForFacilityHandler(w http.ResponseWriter, r *http.Request) {
 	buffer.WriteString(installationId)
 	buffer.WriteString("' AND f1.teamid=teams.teamid WHERE facility=")
 	buffer.WriteString(league)
-	buffer.WriteString(" ORDER BY name;")
+	buffer.WriteString(" AND teams.deleted_at IS NULL ORDER BY name;")
 	fmt.Println(buffer.String())
 	rows, err := db.Query(buffer.String())
 	if err != nil {
