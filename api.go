@@ -39,6 +39,16 @@ type team struct {
 	Division string `json:"division"`
 	Teamid   string `json:"teamid"`
 }
+type Field struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+type PostField struct {
+	Id      string `json:"id"`
+	Address string `json:"address"`
+	City    string `json:"city"`
+	Zip     string `json:"zip"`
+}
 type Response struct {
 	Code    int    `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
@@ -114,6 +124,70 @@ func response_builder(code int, message string) *Response {
 	response.Message = message
 	return &response
 
+}
+
+func fieldsCorrectionHandler(w http.ResponseWriter, r *http.Request) {
+
+	encoder := json.NewEncoder(w)
+	var buffer bytes.Buffer
+
+	buffer.WriteString("SELECT id, name FROM fields WHERE address = '' ORDER BY id;")
+	fmt.Println(buffer.String())
+	rows, err := db.Query(buffer.String())
+	if err != nil {
+		log.Println("Error in DB query of fields: ", err)
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+		return
+	}
+	results := []Field{}
+	for rows.Next() {
+		var f Field
+		rows.Scan(&f.Id, &f.Name)
+		results = append(results, f)
+	}
+	fmt.Printf("%v", results)
+	w.Header().Set("Content-Type", "application/json")
+	encoder.Encode(&results)
+}
+func fieldsCorrectionPostHandler(w http.ResponseWriter, r *http.Request) {
+	encoder := json.NewEncoder(w)
+	decoder := json.NewDecoder(r.Body)
+	var f PostField
+	err := decoder.Decode(&f)
+	if err != nil {
+		fmt.Println(err)
+	}
+	var buffer bytes.Buffer
+
+	buffer.WriteString("UPDATE fields SET address='")
+	buffer.WriteString(f.Address)
+	buffer.WriteString("', city='")
+	buffer.WriteString(f.City)
+	buffer.WriteString("', zip=")
+	buffer.WriteString(f.Zip)
+	buffer.WriteString(" WHERE id=")
+	buffer.WriteString(f.Id)
+	buffer.WriteString(";")
+	fmt.Println(buffer.String())
+	rows, err := db.Query(buffer.String())
+	if err != nil {
+		log.Println("Error in DB query of fields Update: ", err)
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+		return
+	}
+	buffer.Reset()
+	buffer.WriteString("SELECT id, name FROM fields WHERE address = '' ORDER BY id;")
+	fmt.Println(buffer.String())
+	rows, err = db.Query(buffer.String())
+	results := []Field{}
+	for rows.Next() {
+		var f Field
+		rows.Scan(&f.Id, &f.Name)
+		results = append(results, f)
+	}
+	fmt.Printf("%v", results)
+	w.Header().Set("Content-Type", "application/json")
+	encoder.Encode(&results)
 }
 
 /*

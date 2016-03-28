@@ -12,6 +12,9 @@ module.exports = {
             './assets/javascripts/schedule.js',
             './assets/stylesheets/schedule.scss',
         ],
+        fields: [
+            './assets/javascripts/fields.js',
+        ],
     },
     output: {
         path: 'public/assets/',

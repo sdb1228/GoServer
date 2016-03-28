@@ -26,26 +26,29 @@ func init() {
 	root.HandleFunc("/video/{video}", videoTemplateHandler)
 	root.HandleFunc("/about", aboutHandler)
 	root.HandleFunc("/contact", contactHandler)
+	root.HandleFunc("/fields/update", fieldsHandler)
 
 	// assets
 	root.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
 
 	// API endpoints
-	root.HandleFunc("/api/v1/teams/", teamsHandler)                                          //Complete
-	root.HandleFunc("/api/v1/teams/{leagueId}", teamsForFacilityHandler)                     //Complete
-	root.HandleFunc("/api/v1/favorites/{team}", addFavoriteTeamHandler).Methods("POST")      //Complete
-	root.HandleFunc("/api/v1/favorites/{team}", removeFavoriteTeamHandler).Methods("DELETE") //Complete
-	root.HandleFunc("/api/v1/favorites", favoriteTeamsHandler)                               //Complete
-	root.HandleFunc("/api/v1/favorites/games/", favoriteTeamsGamesHandler)                   //Complete
-	root.HandleFunc("/api/v1/todaysGames/{league}", todaysGamesHandler)                      //Complete
-	root.HandleFunc("/api/v1/tomorrowGames/{league}", tomorrowGamesHandler)                  //Complete
-	root.HandleFunc("/api/v1/games/{team}", gamesForTeamHandler)                             //Complete
-	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandler)              //Complete
-	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)        //Complete
-	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)             //Complete
-	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)                               //Complete
-	root.HandleFunc("/api/v1/videos", indexVideoHandler)                                     //Complete
-	root.HandleFunc("/api/v1/videos/{video}/like", likeVideoHandler)                         //Complete
+	root.HandleFunc("/api/v1/teams/", teamsHandler)                                               //Complete
+	root.HandleFunc("/api/v1/fields/correction", fieldsCorrectionHandler)                         //Complete
+	root.HandleFunc("/api/v1/fields/postCorrection", fieldsCorrectionPostHandler).Methods("POST") //Complete
+	root.HandleFunc("/api/v1/teams/{leagueId}", teamsForFacilityHandler)                          //Complete
+	root.HandleFunc("/api/v1/favorites/{team}", addFavoriteTeamHandler).Methods("POST")           //Complete
+	root.HandleFunc("/api/v1/favorites/{team}", removeFavoriteTeamHandler).Methods("DELETE")      //Complete
+	root.HandleFunc("/api/v1/favorites", favoriteTeamsHandler)                                    //Complete
+	root.HandleFunc("/api/v1/favorites/games/", favoriteTeamsGamesHandler)                        //Complete
+	root.HandleFunc("/api/v1/todaysGames/{league}", todaysGamesHandler)                           //Complete
+	root.HandleFunc("/api/v1/tomorrowGames/{league}", tomorrowGamesHandler)                       //Complete
+	root.HandleFunc("/api/v1/games/{team}", gamesForTeamHandler)                                  //Complete
+	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandler)                   //Complete
+	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)             //Complete
+	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)                  //Complete
+	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)                                    //Complete
+	root.HandleFunc("/api/v1/videos", indexVideoHandler)                                          //Complete
+	root.HandleFunc("/api/v1/videos/{video}/like", likeVideoHandler)                              //Complete
 
 	http.Handle("/", root)
 }
@@ -64,6 +67,10 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 }
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
 	t := lookupTemplate("about")
+	t.Execute(w, nil)
+}
+func fieldsHandler(w http.ResponseWriter, r *http.Request) {
+	t := lookupTemplate("fields")
 	t.Execute(w, nil)
 }
 func videoTemplateHandler(w http.ResponseWriter, r *http.Request) {
