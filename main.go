@@ -49,6 +49,7 @@ func init() {
 	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)                                    //Complete
 	root.HandleFunc("/api/v1/videos", indexVideoHandler)                                          //Complete
 	root.HandleFunc("/api/v1/videos/{video}/like", likeVideoHandler)                              //Complete
+	root.HandleFunc("/api/v1/notifications/register", registerPushNotifications)                  //Complete
 
 	http.Handle("/", root)
 }

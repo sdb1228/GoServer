@@ -123,9 +123,13 @@ func response_builder(code int, message string) *Response {
 	response.Code = code
 	response.Message = message
 	return &response
-
 }
 
+func registerPushNotifications(w http.ResponseWriter, r *http.Request) {
+	blah := "HELLOWORLD"
+	send_ios("2bd5d71107395e79c6eb8468d609d98bfddbd58fa37ac4528eb31868d065ec32", &blah, 0)
+
+}
 func fieldsCorrectionHandler(w http.ResponseWriter, r *http.Request) {
 
 	encoder := json.NewEncoder(w)
