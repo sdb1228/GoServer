@@ -126,8 +126,29 @@ func response_builder(code int, message string) *Response {
 }
 
 func registerPushNotifications(w http.ResponseWriter, r *http.Request) {
-	blah := "HELLOWORLD"
-	send_ios("2bd5d71107395e79c6eb8468d609d98bfddbd58fa37ac4528eb31868d065ec32", &blah, 0)
+	installationId := r.FormValue("installationId")
+	deviceToken := r.FormValue("deviceToken")
+	encoder := json.NewEncoder(w)
+	fmt.Println(installationId)
+	fmt.Println(deviceToken)
+
+	if installationId == "" || deviceToken == "" {
+		log.Println("Devicetoken or installationId are nil")
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+	}
+
+	id, err := checkInstallationWithReturn(installationId, deviceToken)
+	if err != nil {
+		log.Println("Error in check instalation ", err)
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+	}
+	err = updateInstallationDeviceToken(id, deviceToken)
+	if err != nil {
+		log.Println("Error in updating devicetoken ", err)
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+	}
+	w.Header().Set("Content-Type", "application/json")
+	encoder.Encode(response_builder(200, "Updated device token"))
 
 }
 func fieldsCorrectionHandler(w http.ResponseWriter, r *http.Request) {
@@ -877,5 +898,59 @@ func checkInstallation(installationId string) error {
 		}
 	}
 
+	return nil
+}
+
+/*
+Checks to see if we have the current installation in the database.  If we don't we will insert it and return the row id
+*/
+func checkInstallationWithReturn(installationId string, devicetoken string) (int64, error) {
+	var buffer bytes.Buffer
+	buffer.WriteString("SELECT id FROM installation where installationid='")
+	buffer.WriteString(installationId)
+	buffer.WriteString("';")
+	rows, err := db.Query(buffer.String())
+	if err != nil {
+		log.Println("Error in querying for installation ID: ", err)
+		return 0, err
+	}
+
+	var id int64
+	var item sql.Result
+	for rows.Next() {
+		rows.Scan(&id)
+	}
+	fmt.Println(id)
+	if id != 0 {
+		return id, nil
+	}
+	item, err = db.Exec(
+		"INSERT INTO installation (installationid, devicetoken) VALUES ($1, $2)",
+		installationId,
+		devicetoken,
+	)
+	if err != nil {
+		log.Println("Error in inserting installation : ", err)
+		return 0, err
+	}
+	value, _ := item.LastInsertId()
+	fmt.Println(value)
+
+	return value, nil
+}
+
+/*
+Checks to see if we have the current installation in the database.  If we don't we will insert it and return the row id
+*/
+func updateInstallationDeviceToken(id int64, devicetoken string) error {
+	_, err := db.Exec(
+		"UPDATE installation SET devicetoken=$1 WHERE id=$2",
+		devicetoken,
+		id,
+	)
+	if err != nil {
+		log.Println("Error in updating installationid : ", err)
+		return err
+	}
 	return nil
 }
