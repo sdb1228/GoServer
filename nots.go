@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/alexjlockwood/gcm"
 	apns "github.com/anachronistic/apns"
 )
 
@@ -24,6 +25,20 @@ func send_ios(token string, alertText *string, badge int) {
 
 }
 
-func send_android(alert *string, badge int) {
+func send_android(message string, token string) {
+	// Create the message to be sent.
+	data := map[string]interface{}{"message": message}
+	regIDs := []string{token}
+	msg := gcm.NewMessage(data, regIDs...)
 
+	// Create a Sender to send the message.
+	sender := &gcm.Sender{ApiKey: "AIzaSyDIjqQTv8AZRhDmSAOTDoLW1tEvSwmiLPg"}
+
+	// Send the message and receive the response after at most two retries.
+	test, err := sender.Send(msg, 2)
+	fmt.Println(test)
+	if err != nil {
+		fmt.Println("Failed to send message:", err)
+		return
+	}
 }
