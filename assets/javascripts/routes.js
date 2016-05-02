@@ -1,16 +1,21 @@
+import page from 'page'
 import React from 'react'
-import { Route, IndexRoute } from 'react-router'
+import App from './main'
+import ReactDOM from 'react-dom'
 
-import App from './components/App'
-import Home from './components/Home'
-import Jobs from './components/Jobs'
-import Builds from './components/Builds'
+const element = document.querySelector('#app')
 
-let routes = (
-  <Route path="/" component={App}>
-    <IndexRoute component={Home} />
-    <Route path="jobs" component={Jobs} />
-    <Route path="jobs/:job/builds" component={Builds} />
-  </Route>
-)
-export default routes
+page('/', function(ctx) {
+    ReactDOM.render(<App/>, element)
+})
+
+//page('/standings/{team}', function(ctx) {
+// team
+    //ReactDOM.render(<standingsComponent team={ctx.params.team}/>, element)
+//})
+
+//page('/', function(ctx) {
+    //ReactDOM.render(HomeComponent, element)
+//})
+
+page.start()

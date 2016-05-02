@@ -35,6 +35,6 @@
 	</div>
 </body>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-	<script src="/assets/main.js"></script>
+	<script src="/assets/app.js"></script>
 	<script src="//www.parsecdn.com/js/parse-1.6.6.min.js"></script>
 </html>

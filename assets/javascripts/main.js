@@ -161,6 +161,4 @@ facilityChoose(facility, event){
 
 }
 
-React.render(<App/>, document.getElementById('app'))
-
-
+export default App
