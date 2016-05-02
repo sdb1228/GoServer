@@ -31,7 +31,7 @@ var Schedule = React.createClass({
     if (nextProps.team == null) {
       return;
     }
-    var url = 'http://soccerlc.com//api/v1/games/' + nextProps.team.teamid
+    var url = 'http://localhost:8960/api/v1/games/' + nextProps.team.teamid
     axios.get(url)
       .then(function (response) {
         this.setState({games: response.data, loading: false});
@@ -41,11 +41,23 @@ var Schedule = React.createClass({
       });
   },
 
+  printClicked (event){
+    var divToPrint=document.getElementById("teamSchedule");
+    debugger
+    var newWin=window.open("");
+    newWin.document.write(divToPrint.outerHTML);
+    newWin.print();
+    newWin.close();
+  },
   render () {
     var content = [];
+    var tableClass= "table table-striped";
+    var printButton = [];
     if (this.props.team) {
+      printButton = [<button className="hvr-grow-shadow btn btn-primary btn-lg" onClick={this.printClicked.bind(this)}>Print me</button>];
+      tableClass = tableClass + " shadow";
       if(this.state.loading){
-        content = [<tr><td>loading</td></tr>]  
+        content = [<tr><td>loading</td></tr>]
       }
       else{
         content = [<tr><th>When</th><th>Where</th><th>Home Team</th><th>Home Team Score</th><th>Away Team Score</th><th>Away Team</th></tr>]
@@ -57,9 +69,9 @@ var Schedule = React.createClass({
     else{
       content = <tr></tr>
     }
-    return( <div style={styles.tableContainer}><table className="table table-striped">
+    return( <div className="tableSize" style={styles.tableContainer}><table id="teamSchedule" className={tableClass}>
             <tbody>{content}</tbody>
-            </table></div>);
+            </table>{printButton}</div>);
   },
 
   renderItem (item) {

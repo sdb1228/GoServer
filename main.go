@@ -55,7 +55,7 @@ func init() {
 }
 
 func main() {
-	http.ListenAndServe(":8960", nil)
+	http.ListenAndServe(":80", nil)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {

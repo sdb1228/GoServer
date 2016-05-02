@@ -20,7 +20,7 @@ var styles = {
   },
   divStyle: {
       "background-color": 'black'
-  }, 
+  },
   menu: {
     borderRadius: '3px',
     boxShadow: '0 2px 12px rgba(0, 0, 0, 0.1)',
@@ -66,7 +66,7 @@ onSelect(value, item){
     super(props);
     this.selectedTeam = "lets_play";
     this.state = {count: props.initialCount};
-    axios.get('http://soccerlc.com//api/v1/teams/6')
+    axios.get('http://localhost:8960/api/v1/teams/6')
       .then(function (response) {
         this.success(response.data);
       }.bind(this))
