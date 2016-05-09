@@ -35,12 +35,15 @@ input{
   margin-left: 20px;
 }
 .root {
-  text-align: center;
+  width: 40%;
+  margin: auto;
 }
 ul {
-    width: 40%;
-    margin: auto;
-
+  display: flex;
+  justify-content: center;
+}
+.autocomplete-Wrapper > div{
+  display: block !important;
 }
 /* Grow Shadow */
 .hvr-grow-shadow {

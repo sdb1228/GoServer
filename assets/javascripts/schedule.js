@@ -43,7 +43,6 @@ var Schedule = React.createClass({
 
   printClicked (event){
     var divToPrint=document.getElementById("teamSchedule");
-    debugger
     var newWin=window.open("");
     newWin.document.write(divToPrint.outerHTML);
     newWin.print();
@@ -54,7 +53,7 @@ var Schedule = React.createClass({
     var tableClass= "table table-striped";
     var printButton = [];
     if (this.props.team) {
-      printButton = [<button className="hvr-grow-shadow btn btn-primary btn-lg" onClick={this.printClicked.bind(this)}>Print me</button>];
+      printButton = [<button className="hvr-grow-shadow btn btn-primary btn-lg" onClick={this.printClicked}>Print me</button>];
       tableClass = tableClass + " shadow";
       if(this.state.loading){
         content = [<tr><td>loading</td></tr>]

@@ -97,7 +97,7 @@ renderItems (items) {
 facilityChoose(facility, event){
   event.target.parentElement.className="active";
   $("#" + this.state.selected).toggleClass("active");
-  var url = "http://soccerlc.com//api/v1/teams/" + event.target.id
+  var url = "http://localhost:8960/api/v1/teams/" + event.target.id
   this.selectedTeam = event.target.parentElement.id
   axios.get(url)
   .then(function (response) {
@@ -107,9 +107,6 @@ facilityChoose(facility, event){
     console.log(response);
   });
 }
-  static contextTypes = {
-    onSetTitle: PropTypes.func.isRequired,
-  };
   render() {
     return (
       <div>
@@ -121,37 +118,39 @@ facilityChoose(facility, event){
               <li id="uysa_boys" role="presentation"><a id="4" href="#" onClick={this.facilityChoose.bind(this, 'uysa_boys')}>UYSA Boys</a></li>
               <li id="uysa_girls" role="presentation"><a id="3" href="#" onClick={this.facilityChoose.bind(this, 'uysa_girls')}>UYSA Girls</a></li>
             </ul>
-            <Autocomplete
-              items={this.state.teams}
-              getItemValue={(item) => item.name}
-              inputProps={{"className": "form-control input-lg", "style": {"border": "solid 1px #ccc", "width": "900px", "marginTop": "20px"}}}
-              onSelect={this.onSelect.bind(this)}
-              onChange={(event, value) => {
-                this.setState({loading: true, team: null})
-                this.fakeRequest(value, (items) => {
-                  this.setState({ teams: items, loading: false })
-                })
-              }}
-              renderItem={(item, isHighlighted) => (
-                <div
-                  style={isHighlighted ? styles.highlightedItem : styles.item}
-                  key={item.Id}
-                  id={item.Id}
-                  location={item.facility}
-                ><h1>{item.name}</h1><div>{item.division}</div></div>
-              )}
-              renderMenu={(items, value, style) => (
-                <div style={{...styles.menu, ...style}}>
-                  {value === '' ? (
-                    <div style={{padding: 6}}>Type the name of a Team</div>
-                  ) : this.state.loading ? (
-                    <div style={{padding: 6}}>Loading...</div>
-                  ) : items.length === 0 ? (
-                    <div style={{padding: 6}}>No matches for {value}</div>
-                  ) : this.renderItems(items)}
-                </div>
-              )} />
+            <div className="autocomplete-Wrapper">
+              <Autocomplete
+                items={this.state.teams}
+                getItemValue={(item) => item.name}
+                inputProps={{"className": "form-control input-lg", "style": {"border": "solid 1px #ccc", "width": "100%", "marginTop": "20px"}}}
+                onSelect={this.onSelect.bind(this)}
+                onChange={(event, value) => {
+                  this.setState({loading: true, team: null})
+                  this.fakeRequest(value, (items) => {
+                    this.setState({ teams: items, loading: false })
+                  })
+                }}
+                renderItem={(item, isHighlighted) => (
+                  <div
+                    style={isHighlighted ? styles.highlightedItem : styles.item}
+                    key={item.Id}
+                    id={item.Id}
+                    location={item.facility}
+                  ><h1>{item.name}</h1><div>{item.division}</div></div>
+                )}
+                renderMenu={(items, value, style) => (
+                  <div style={{...styles.menu, ...style}}>
+                    {value === '' ? (
+                      <div style={{padding: 6}}>Type the name of a Team</div>
+                    ) : this.state.loading ? (
+                      <div style={{padding: 6}}>Loading...</div>
+                    ) : items.length === 0 ? (
+                      <div style={{padding: 6}}>No matches for {value}</div>
+                    ) : this.renderItems(items)}
+                  </div>
+                )} />
             </div>
+          </div>
             <Schedule
               team={this.state.team}
               loading={this.state.team ? true : false}/>
