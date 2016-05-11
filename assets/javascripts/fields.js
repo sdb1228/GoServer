@@ -9,7 +9,7 @@ class App extends Component {
 
   constructor(props) {
     super(props);
-    axios.get('http://localhost:8960/api/v1/fields/correction')
+    axios.get('http://soccerlc.com/api/v1/fields/correction')
       .then(function (response) {
         this.success(response.data);
       }.bind(this))
@@ -30,7 +30,7 @@ class App extends Component {
       alert("missing a field!");
     }
     else{
-      axios.post('http://localhost:8960/api/v1/fields/postCorrection', {
+      axios.post('http://soccerlc.com/api/v1/fields/postCorrection', {
         id: id,
         address: address,
         city: city,

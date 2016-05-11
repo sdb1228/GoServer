@@ -94,6 +94,15 @@ type config struct {
 	Host     string
 }
 
+type Standings struct {
+	TeamName     string `json:"teamname"`
+	TeamId       string `json:"teamid"`
+	Points       *int   `json:"points"`
+	GoalsFor     *int   `json:"goalsfor"`
+	GoalsAgainst *int   `json:"goalsagainst"`
+	GamesPlayed  *int   `json:"gamesplayed"`
+}
+
 func init() {
 
 	file, _ := os.Open("config.json")
@@ -174,6 +183,64 @@ func fieldsCorrectionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder.Encode(&results)
 }
+
+func divisionStandings(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	division := vars["division"]
+	fmt.Println(division)
+	encoder := json.NewEncoder(w)
+	rows, err := db.Query(`
+	SELECT t.name,t.teamid, (home.hometeampoints + tie.tie + away.awayteampoints) AS points, (home.homefor + away.awayfor) AS goalsfor, (home.homeagainst + away.awayagainst) AS goalsagainst, (away.awaygamesPlayed + home.homegamesPlayed) AS gamesPlayed
+		FROM teams AS t
+		INNER JOIN (
+			SELECT
+				g.awayteam AS awayteamid,
+				SUM(CASE WHEN g.awayteamscore > g.hometeamscore THEN 3 ELSE 0 END) AS awayteampoints,
+				SUM(CASE WHEN g.awayteamscore IS NOT NULL THEN 1 ELSE 0 END) AS awaygamesPlayed,
+				SUM(CASE WHEN g.awayteamscore IS NOT NULL THEN g.awayteamscore ELSE 0 END) AS awayfor,
+				SUM(CASE WHEN g.hometeamscore IS NOT NULL THEN g.hometeamscore ELSE 0 END) AS awayagainst
+			FROM teams AS t
+			INNER JOIN games g ON g.awayteam=t.teamid
+			GROUP BY g.awayteam
+		) AS away ON t.teamid=away.awayteamid
+		INNER JOIN (
+			SELECT
+				g3.hometeam AS hometeamid,
+				SUM(CASE WHEN g3.awayteamscore < g3.hometeamscore THEN 3 ElSE 0 END) AS hometeampoints,
+				SUM(CASE WHEN g3.hometeamscore IS NOT NULL THEN 1 ELSE 0 END) AS homegamesPlayed,
+				SUM(CASE WHEN g3.hometeamscore IS NOT NULL THEN g3.hometeamscore ELSE 0 END) AS homefor,
+				SUM(CASE WHEN g3.awayteamscore IS NOT NULL THEN g3.awayteamscore ELSE 0 END) AS homeagainst
+			FROM teams AS t
+			INNER JOIN games g3 ON g3.hometeam=t.teamid
+			GROUP BY g3.hometeam
+		) AS home ON t.teamid=home.hometeamid
+		INNER JOIN (
+			SELECT
+				g2.hometeam AS tieteamid,
+				SUM(CASE WHEN g2.awayteamscore = g2.hometeamscore THEN 1 ELSE 0 END) AS tie
+			FROM teams AS t
+			INNER JOIN games g2 ON g2.hometeam=t.teamid
+			GROUP BY g2.hometeam
+		) AS tie ON t.teamid=tie.tieteamid
+		WHERE t.division=$1 AND t.deleted_at IS NULL
+		ORDER BY points DESC
+		`, division)
+	if err != nil {
+		fmt.Println(err)
+		encoder.Encode(response_builder(403, "Internal server error please try again later"))
+		return
+	}
+	results := []Standings{}
+	for rows.Next() {
+		var s Standings
+		rows.Scan(&s.TeamName, &s.TeamId, &s.Points, &s.GoalsFor, &s.GoalsAgainst, &s.GamesPlayed)
+		results = append(results, s)
+	}
+	fmt.Printf("%v", results)
+	w.Header().Set("Content-Type", "application/json")
+	encoder.Encode(&results)
+}
+
 func fieldsCorrectionPostHandler(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	decoder := json.NewDecoder(r.Body)

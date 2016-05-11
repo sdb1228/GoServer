@@ -50,12 +50,13 @@ func init() {
 	root.HandleFunc("/api/v1/videos", indexVideoHandler)                                          //Complete
 	root.HandleFunc("/api/v1/videos/{video}/like", likeVideoHandler)                              //Complete
 	root.HandleFunc("/api/v1/notifications/register", registerPushNotifications).Methods("POST")  //Complete
+	root.HandleFunc("/api/v1/standings/{division}", divisionStandings)                            //Complete
 
 	http.Handle("/", root)
 }
 
 func main() {
-	http.ListenAndServe(":8960", nil)
+	http.ListenAndServe(":80", nil)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {

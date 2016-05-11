@@ -12,6 +12,12 @@ let styles = {
   },
   tableContainer: {
     marginTop: '20px'
+  },
+  linkDiv: {
+    float: "left",
+  },
+  linkContainer: {
+    margin: '0 auto'
   }
 }
 let weekday = new Array(7);
@@ -31,7 +37,7 @@ var Schedule = React.createClass({
     if (nextProps.team == null) {
       return;
     }
-    var url = 'http://localhost:8960/api/v1/games/' + nextProps.team.teamid
+    var url = 'http://soccerlc.com/api/v1/games/' + nextProps.team.teamid
     axios.get(url)
       .then(function (response) {
         this.setState({games: response.data, loading: false});
@@ -52,8 +58,10 @@ var Schedule = React.createClass({
     var content = [];
     var tableClass= "table table-striped";
     var printButton = [];
+    var standingsLink = [];
     if (this.props.team) {
       printButton = [<button className="hvr-grow-shadow btn btn-primary btn-lg" onClick={this.printClicked}>Print me</button>];
+      standingsLink = [<a style={styles.linkDiv} href={"/standings/" + this.props.team.division}>{this.props.team.division}</a>];
       tableClass = tableClass + " shadow";
       if(this.state.loading){
         content = [<tr><td>loading</td></tr>]
@@ -68,7 +76,7 @@ var Schedule = React.createClass({
     else{
       content = <tr></tr>
     }
-    return( <div className="tableSize" style={styles.tableContainer}><table id="teamSchedule" className={tableClass}>
+    return( <div className="tableSize" style={styles.tableContainer}><div style={styles.linkContainer}>{standingsLink}</div><table id="teamSchedule" className={tableClass}>
             <tbody>{content}</tbody>
             </table>{printButton}</div>);
   },

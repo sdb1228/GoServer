@@ -14,6 +14,6 @@ def deploy():
 	build_server()
 	run("service soccerlc stop")
 	run("rm -r /srv/*")
-	put("server.tar","./work/src/soccerlcprod/server.tar")
-	run('tar -xf /root/work/src/soccerlcprod/server.tar -C /srv')
+	put("server.tar","./work/src/soccerlcprod2/server.tar")
+	run('tar -xf /root/work/src/soccerlcprod2/server.tar -C /srv')
 	run("service soccerlc restart")
