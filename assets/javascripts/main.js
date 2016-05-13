@@ -66,7 +66,7 @@ onSelect(value, item){
     super(props);
     this.selectedTeam = "lets_play";
     this.state = {count: props.initialCount};
-    axios.get('http://soccerlc.com/api/v1/teams/6')
+    axios.get('/api/v1/teams/6')
       .then(function (response) {
         this.success(response.data);
       }.bind(this))
@@ -97,7 +97,7 @@ renderItems (items) {
 facilityChoose(facility, event){
   event.target.parentElement.className="active";
   $("#" + this.state.selected).toggleClass("active");
-  var url = "soccerlc.com/api/v1/teams/" + event.target.id
+  var url = "/api/v1/teams/" + event.target.id
   this.selectedTeam = event.target.parentElement.id
   axios.get(url)
   .then(function (response) {

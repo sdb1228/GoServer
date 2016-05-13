@@ -2,13 +2,22 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	_ "github.com/lib/pq"
+)
+
+var (
+	configStruct config
+	db           *sql.DB
 )
 
 type Page struct {
@@ -16,8 +25,20 @@ type Page struct {
 	Body string
 }
 
+type config struct {
+	User         string
+	Password     string
+	Database     string
+	Host         string
+	ProdPort     string
+	DevPort      string
+	IsProduction string
+}
+
 func init() {
+
 	root := mux.NewRouter()
+	root.StrictSlash(true)
 
 	// root
 	root.HandleFunc("/", indexHandler)
@@ -32,31 +53,54 @@ func init() {
 	root.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
 
 	// API endpoints
-	root.HandleFunc("/api/v1/teams/", teamsHandler)                                               //Complete
+	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandler)  //Complete
+	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler) //Complete
+	// games
+	root.HandleFunc("/api/v1/games/{team}", gamesForTeamHandler) //Complete
+	//teams
+	root.HandleFunc("/api/v1/teams/", teamsHandler)                      //Complete
+	root.HandleFunc("/api/v1/teams/{leagueId}", teamsForFacilityHandler) //Complete
+	//favorites
+	root.HandleFunc("/api/v1/favorites/{team}", addFavoriteTeamHandler).Methods("POST")      //Complete
+	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)        //Complete
+	root.HandleFunc("/api/v1/favorites/{team}", removeFavoriteTeamHandler).Methods("DELETE") //Complete
+	root.HandleFunc("/api/v1/favorites", favoriteTeamsHandler)                               //Complete
+	root.HandleFunc("/api/v1/favorites/games/", favoriteTeamsGamesHandler)                   //Complete
+	//fields
 	root.HandleFunc("/api/v1/fields/correction", fieldsCorrectionHandler)                         //Complete
 	root.HandleFunc("/api/v1/fields/postCorrection", fieldsCorrectionPostHandler).Methods("POST") //Complete
-	root.HandleFunc("/api/v1/teams/{leagueId}", teamsForFacilityHandler)                          //Complete
-	root.HandleFunc("/api/v1/favorites/{team}", addFavoriteTeamHandler).Methods("POST")           //Complete
-	root.HandleFunc("/api/v1/favorites/{team}", removeFavoriteTeamHandler).Methods("DELETE")      //Complete
-	root.HandleFunc("/api/v1/favorites", favoriteTeamsHandler)                                    //Complete
-	root.HandleFunc("/api/v1/favorites/games/", favoriteTeamsGamesHandler)                        //Complete
-	root.HandleFunc("/api/v1/todaysGames/{league}", todaysGamesHandler)                           //Complete
-	root.HandleFunc("/api/v1/tomorrowGames/{league}", tomorrowGamesHandler)                       //Complete
-	root.HandleFunc("/api/v1/games/{team}", gamesForTeamHandler)                                  //Complete
-	root.HandleFunc("/api/v1/divisions/{division}/games", divisionGamesHandler)                   //Complete
-	root.HandleFunc("/api/v1/facilitys/{league}/divisions", facilityDivisionsHandler)             //Complete
-	root.HandleFunc("/api/v1/divisions/{division}/teams", divisionsTeamsHandler)                  //Complete
-	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)                                    //Complete
-	root.HandleFunc("/api/v1/videos", indexVideoHandler)                                          //Complete
-	root.HandleFunc("/api/v1/videos/{video}/like", likeVideoHandler)                              //Complete
-	root.HandleFunc("/api/v1/notifications/register", registerPushNotifications).Methods("POST")  //Complete
-	root.HandleFunc("/api/v1/standings/{division}", divisionStandings)                            //Complete
+	//notifications
+	root.HandleFunc("/api/v1/notifications/register", registerPushNotifications).Methods("POST") //Complete
+	//today/tomorrowgames
+	root.HandleFunc("/api/v1/todaysGames/{league}", todaysGamesHandler)     //Complete
+	root.HandleFunc("/api/v1/tomorrowGames/{league}", tomorrowGamesHandler) //Complete
+	//videos
+	root.HandleFunc("/api/v1/videoUpload", videoUploadHandler)       //Complete
+	root.HandleFunc("/api/v1/videos", indexVideoHandler)             //Complete
+	root.HandleFunc("/api/v1/videos/{video}/like", likeVideoHandler) //Complete
+	//standings
+	root.HandleFunc("/api/v1/standings/{division}", divisionStandings) //Complete
 
 	http.Handle("/", root)
 }
 
 func main() {
-	http.ListenAndServe(":80", nil)
+	file, _ := os.Open("config.json")
+	decoder := json.NewDecoder(file)
+	ferr := decoder.Decode(&configStruct)
+	if ferr != nil {
+		log.Fatal("Error in decoding config: ", ferr)
+	}
+	var err error
+	db, err = sql.Open("postgres", fmt.Sprintf("user=%v dbname=%v host=%v password=%v sslmode=disable", configStruct.User, configStruct.Database, configStruct.Host, configStruct.Password))
+	if err != nil {
+		log.Fatal("Error in connecting to postgres databse: ", err)
+	}
+	if strings.Contains("True", configStruct.IsProduction) {
+		http.ListenAndServe(configStruct.ProdPort, nil)
+	} else {
+		http.ListenAndServe(configStruct.DevPort, nil)
+	}
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {

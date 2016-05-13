@@ -31,7 +31,7 @@ weekday[6] = "Saturday";
 var Standings = React.createClass({
 
   componentWillMount(){
-    const url = "http://soccerlc.com/api/v1/standings/" + this.props.division;
+    const url = "/api/v1/standings/" + this.props.division;
     axios.get(url)
       .then(function (response) {
         this.success(response.data);

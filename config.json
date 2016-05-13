@@ -2,5 +2,8 @@
     "User": "dburnett",
     "Password": "doug1",
     "Database": "Soccer_Games",
-    "Host": "localhost"
+    "Host": "localhost",
+    "ProdPort": ":80",
+    "DevPort": ":8960",
+    "IsProduction": "Fale"
 }
