@@ -5,5 +5,5 @@
     "Host": "localhost",
     "ProdPort": ":80",
     "DevPort": ":8960",
-    "IsProduction": "Fale"
+    "IsProduction": "True"
 }

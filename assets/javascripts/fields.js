@@ -65,6 +65,5 @@ class App extends Component {
 
 }
 
-React.render(<App/>, document.getElementById('fields'))
-
+export default App
 

@@ -42,12 +42,13 @@ func init() {
 
 	// root
 	root.HandleFunc("/", indexHandler)
+	root.NotFoundHandler = http.HandlerFunc(indexHandler)
 
 	// templates
 	root.HandleFunc("/video/{video}", videoTemplateHandler)
 	root.HandleFunc("/about", aboutHandler)
 	root.HandleFunc("/contact", contactHandler)
-	root.HandleFunc("/fields/update", fieldsHandler)
+	root.HandleFunc("/fields/update", indexHandler)
 
 	// assets
 	root.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
