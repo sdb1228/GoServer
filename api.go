@@ -168,10 +168,10 @@ func divisionStandings(w http.ResponseWriter, r *http.Request) {
 		INNER JOIN (
 			SELECT
 				g.awayteam AS awayteamid,
-				SUM(CASE WHEN g.awayteamscore > g.hometeamscore THEN 3 ELSE 0 END) AS awayteampoints,
-				SUM(CASE WHEN g.awayteamscore IS NOT NULL THEN 1 ELSE 0 END) AS awaygamesPlayed,
-				SUM(CASE WHEN g.awayteamscore IS NOT NULL THEN g.awayteamscore ELSE 0 END) AS awayfor,
-				SUM(CASE WHEN g.hometeamscore IS NOT NULL THEN g.hometeamscore ELSE 0 END) AS awayagainst
+				SUM(CASE WHEN g.awayteamscore > g.hometeamscore AND tournament IS NULL THEN 3 ELSE 0 END) AS awayteampoints,
+				SUM(CASE WHEN g.awayteamscore IS NOT NULL AND tournament IS NULL THEN 1 ELSE 0 END) AS awaygamesPlayed,
+				SUM(CASE WHEN g.awayteamscore IS NOT NULL AND tournament IS NULL THEN g.awayteamscore ELSE 0 END) AS awayfor,
+				SUM(CASE WHEN g.hometeamscore IS NOT NULL AND tournament IS NULL THEN g.hometeamscore ELSE 0 END) AS awayagainst
 			FROM teams AS t
 			INNER JOIN games g ON g.awayteam=t.teamid
 			GROUP BY g.awayteam
@@ -179,10 +179,10 @@ func divisionStandings(w http.ResponseWriter, r *http.Request) {
 		INNER JOIN (
 			SELECT
 				g3.hometeam AS hometeamid,
-				SUM(CASE WHEN g3.awayteamscore < g3.hometeamscore THEN 3 ElSE 0 END) AS hometeampoints,
-				SUM(CASE WHEN g3.hometeamscore IS NOT NULL THEN 1 ELSE 0 END) AS homegamesPlayed,
-				SUM(CASE WHEN g3.hometeamscore IS NOT NULL THEN g3.hometeamscore ELSE 0 END) AS homefor,
-				SUM(CASE WHEN g3.awayteamscore IS NOT NULL THEN g3.awayteamscore ELSE 0 END) AS homeagainst
+				SUM(CASE WHEN g3.awayteamscore < g3.hometeamscore AND tournament IS NULL THEN 3 ElSE 0 END) AS hometeampoints,
+				SUM(CASE WHEN g3.hometeamscore IS NOT NULL AND tournament IS NULL THEN 1 ELSE 0 END) AS homegamesPlayed,
+				SUM(CASE WHEN g3.hometeamscore IS NOT NULL AND tournament IS NULL THEN g3.hometeamscore ELSE 0 END) AS homefor,
+				SUM(CASE WHEN g3.awayteamscore IS NOT NULL AND tournament IS NULL THEN g3.awayteamscore ELSE 0 END) AS homeagainst
 			FROM teams AS t
 			INNER JOIN games g3 ON g3.hometeam=t.teamid
 			GROUP BY g3.hometeam
